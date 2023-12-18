@@ -55,7 +55,7 @@ func (g *UserMessageHandler) ReplyText(msg *openwechat.Message) error {
 	output, err = cmd.CombinedOutput()
 	if err != nil {
 		log.Printf("reply error: %v \n", err)
-		msg.ReplyText("机器人挂了，我一会发现了就去修；或者你可以试试重发")
+		msg.ReplyText("AI挂了，我一会发现了就去修；或者你可以试试重发")
 		return err
 	}
 
