@@ -18,9 +18,16 @@ func init() {
 	ctx = context.Background()
 	// Access your API key as an environment variable (see "Set up your API key" above)
 
-	key, _ := os.ReadFile("key.txt")
+	key := os.Getenv("API_KEY")
+	if key == "" {
+		keyTxt, err := os.ReadFile("key.txt")
+		if err != nil {
+			log.Fatal(err)
+		}
+		key = string(keyTxt)
+	}
 
-	client, err := genai.NewClient(ctx, option.WithAPIKey(string(key)))
+	client, err := genai.NewClient(ctx, option.WithAPIKey(key))
 	if err != nil {
 		log.Fatal(err)
 	}
