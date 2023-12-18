@@ -1,9 +1,8 @@
 package main
 
-import (
-	"github.com/Wuvist/geminibot/bootstrap"
-)
+import "github.com/Wuvist/geminibot/bootstrap"
 
 func main() {
 	bootstrap.Run()
+
 }
