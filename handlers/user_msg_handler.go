@@ -2,10 +2,9 @@ package handlers
 
 import (
 	"log"
-	"os"
-	"os/exec"
 	"strings"
 
+	"github.com/Wuvist/geminibot/goapi"
 	"github.com/eatmoreapple/openwechat"
 )
 
@@ -32,41 +31,19 @@ func NewUserMessageHandler() MessageHandlerInterface {
 func (g *UserMessageHandler) ReplyText(msg *openwechat.Message) error {
 	// 接收私聊消息
 	sender, err := msg.Sender()
+	if err != nil {
+		log.Printf("get msg sender error :%v \n", err)
+		return err
+	}
 	log.Printf("Received User %v Text Msg : %v", sender.NickName, msg.Content)
 
 	// 向GPT发起请求
 	requestText := strings.TrimSpace(msg.Content)
-	requestText = strings.Trim(msg.Content, "\n")
+	requestText = strings.Trim(requestText, "\n")
 
-	err = os.WriteFile("req.txt", []byte(requestText), 0644)
-	if err != nil {
-		log.Printf("request error: %v \n", err)
-		msg.ReplyText("机器人挂了，我一会发现了就去修；或者你可以试试重发")
-		return err
-	}
-
-	command := "python"
-	args := []string{"call_gemini.py"}
-
-	// Create a new command object
-	cmd := exec.Command(command, args...)
-
-	var output []byte
-	output, err = cmd.CombinedOutput()
-	if err != nil {
-		log.Printf("reply error: %v \n %v", err, string(output))
-		msg.ReplyText("AI挂了，我一会发现了就去修；或者你可以试试重发")
-		return err
-	}
-
-	if output == nil {
-		msg.ReplyText("机器人没回复，我一会发现了就去修。")
-		return nil
-	}
+	reply := goapi.GetReply(sender.NickName, requestText)
 
 	// 回复用户
-	reply := strings.TrimSpace(string(output))
-	reply = strings.Trim(reply, "\n")
 	_, err = msg.ReplyText(reply)
 	if err != nil {
 		log.Printf("response user error: %v \n", err)
