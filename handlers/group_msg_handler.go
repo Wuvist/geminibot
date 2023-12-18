@@ -59,8 +59,8 @@ func (g *GroupMessageHandler) ReplyText(msg *openwechat.Message) error {
 	var output []byte
 	output, err = cmd.CombinedOutput()
 	if err != nil {
-		log.Printf("reply error: %v \n", err)
-		msg.ReplyText("机器人挂了，我一会发现了就去修；或者你可以试试重发")
+		log.Printf("reply error: %v \n %v", err, string(output))
+		msg.ReplyText("AI挂了，我一会发现了就去修；或者你可以试试重发")
 		return err
 	}
 
