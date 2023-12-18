@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/google/generative-ai-go/genai"
 	"google.golang.org/api/option"
@@ -13,6 +14,21 @@ import (
 
 var model *genai.GenerativeModel
 var ctx context.Context
+
+type session struct {
+	cs       *genai.ChatSession
+	lastChat time.Time
+}
+
+func (s *session) HasExpired() bool {
+	return time.Now().Sub(s.lastChat).Minutes() > 5
+}
+
+func (s *session) Update() {
+	s.lastChat = time.Now()
+}
+
+var sessions = make(map[string]*session)
 
 func init() {
 	ctx = context.Background()
@@ -37,7 +53,20 @@ func init() {
 }
 
 func GetReply(sender, msg string) (reply string) {
-	resp, err := model.GenerateContent(ctx, genai.Text(msg))
+	if msg == "重来" {
+		delete(sessions, sender)
+		return "好的~对话记录已经清除~"
+	}
+
+	ses := sessions[sender]
+	if ses == nil || ses.HasExpired() {
+		ses = &session{model.StartChat(), time.Now()}
+		sessions[sender] = ses
+	} else {
+		ses.Update()
+	}
+
+	resp, err := ses.cs.SendMessage(ctx, genai.Text(msg))
 	if err != nil {
 		log.Printf("reply error: %v \n", err)
 		return "AI挂了，我一会发现了就去修；或者你可以试试重发"
