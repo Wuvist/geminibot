@@ -49,6 +49,7 @@ func GetReply(sender, msg string) (reply string) {
 	}
 
 	reply = strings.Trim(reply, "\n")
+	reply = strings.ReplaceAll(reply, "**", "")
 
 	return
 }
