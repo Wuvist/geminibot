@@ -51,7 +51,11 @@ func init() {
 
 	// For text-only input, use the gemini-pro model
 	model = client.GenerativeModel("gemini-pro")
+	model.SetCandidateCount(1)
+	model.SetTemperature(0.1)
 	vModel = client.GenerativeModel("gemini-pro-vision")
+	vModel.SetCandidateCount(1)
+	vModel.SetTemperature(1)
 }
 
 var picData []byte
