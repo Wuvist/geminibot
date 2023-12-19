@@ -85,7 +85,7 @@ func GetReply(sender, msg string) (reply string) {
 		if strings.Contains(mime, "png") {
 			resp, err = ses.cs.SendMessage(ctx, genai.Text(msg), genai.ImageData("png", picData))
 		} else {
-			resp, err = ses.cs.SendMessage(ctx, genai.Text(msg), genai.ImageData("jpg", picData))
+			resp, err = ses.cs.SendMessage(ctx, genai.Text(msg), genai.ImageData("jpeg", picData))
 		}
 
 		picData = nil
