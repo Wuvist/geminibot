@@ -81,7 +81,7 @@ func GetReply(sender, msg string) (reply string) {
 		ses = &session{vModel.StartChat(), time.Now()}
 		sessions[sender] = ses
 		mime := http.DetectContentType(picData)
-		log.Panicf("mime: %s", mime)
+		log.Printf("mime: %s \n", mime)
 		if strings.Contains(mime, "png") {
 			resp, err = ses.cs.SendMessage(ctx, genai.Text(msg), genai.ImageData("png", picData))
 		} else {
