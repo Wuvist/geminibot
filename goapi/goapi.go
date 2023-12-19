@@ -106,6 +106,7 @@ func GetReply(sender, msg string) (reply string) {
 
 	if err != nil {
 		log.Printf("reply error: %v \n", err)
+		delete(sessions, sender)
 		return "AI挂了，我一会发现了就去修；或者你可以试试重发"
 	}
 
@@ -118,6 +119,7 @@ func GetReply(sender, msg string) (reply string) {
 	}
 
 	if reply == "" {
+		delete(sessions, sender)
 		return "AI没回复，不知道为啥，我一会发现了就去喵一喵~"
 	}
 
