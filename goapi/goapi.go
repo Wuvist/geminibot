@@ -79,7 +79,11 @@ func GetReply(sender, msg string) (reply string) {
 
 	if needVmodel {
 		ses = &session{vModel.StartChat(), time.Now()}
-		sessions[sender] = ses
+		// sessions[sender] = ses
+		// Somehow gemini-pro-vision close chat after first msg
+		// So, remove from sessions to ensure new session next time
+		delete(sessions, sender)
+
 		mime := http.DetectContentType(picData)
 		log.Printf("mime: %s \n", mime)
 		if strings.Contains(mime, "png") {
