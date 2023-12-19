@@ -1,8 +1,10 @@
 package handlers
 
 import (
+	"io"
 	"log"
 
+	"github.com/Wuvist/geminibot/goapi"
 	"github.com/eatmoreapple/openwechat"
 )
 
@@ -50,4 +52,22 @@ func Handler(msg *openwechat.Message) {
 
 	// 私聊
 	handlers[UserHandler].handle(msg)
+}
+
+func handleIfPicture(msg *openwechat.Message) error {
+	if msg.IsPicture() {
+		response, err := msg.GetPicture()
+		if err != nil {
+			log.Printf("get picture error :%v \n", err)
+			return err
+		}
+		body, err := io.ReadAll(response.Body)
+		if err != nil {
+			log.Printf("read picture error :%v \n", err)
+			return err
+		}
+		response.Body.Close()
+		goapi.SetPicutre(body)
+	}
+	return nil
 }

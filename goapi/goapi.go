@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -12,7 +13,7 @@ import (
 	"google.golang.org/api/option"
 )
 
-var model *genai.GenerativeModel
+var model, vModel *genai.GenerativeModel
 var ctx context.Context
 
 type session struct {
@@ -50,6 +51,13 @@ func init() {
 
 	// For text-only input, use the gemini-pro model
 	model = client.GenerativeModel("gemini-pro")
+	vModel = client.GenerativeModel("gemini-pro-vision")
+}
+
+var picData []byte
+
+func SetPicutre(pic []byte) {
+	picData = pic
 }
 
 func GetReply(sender, msg string) (reply string) {
@@ -58,15 +66,40 @@ func GetReply(sender, msg string) (reply string) {
 		return "好的~对话记录已经清除~"
 	}
 
-	ses := sessions[sender]
-	if ses == nil || ses.HasExpired() {
-		ses = &session{model.StartChat(), time.Now()}
-		sessions[sender] = ses
-	} else {
-		ses.Update()
+	needVmodel := false
+	if strings.Index(msg, "[图片]") > 0 && picData != nil {
+		i := strings.LastIndex(msg, " - - -")
+		msg = msg[i+1:]
+		needVmodel = true
 	}
 
-	resp, err := ses.cs.SendMessage(ctx, genai.Text(msg))
+	var err error
+	var ses *session
+	var resp *genai.GenerateContentResponse
+
+	if needVmodel {
+		ses = &session{vModel.StartChat(), time.Now()}
+		sessions[sender] = ses
+		mime := http.DetectContentType(picData)
+		log.Panicf("mime: %s", mime)
+		if strings.Contains(mime, "png") {
+			resp, err = ses.cs.SendMessage(ctx, genai.Text(msg), genai.ImageData("png", picData))
+		} else {
+			resp, err = ses.cs.SendMessage(ctx, genai.Text(msg), genai.ImageData("jpg", picData))
+		}
+
+		picData = nil
+	} else {
+		ses = sessions[sender]
+		if ses == nil || ses.HasExpired() {
+			ses = &session{model.StartChat(), time.Now()}
+			sessions[sender] = ses
+		} else {
+			ses.Update()
+		}
+		resp, err = ses.cs.SendMessage(ctx, genai.Text(msg))
+	}
+
 	if err != nil {
 		log.Printf("reply error: %v \n", err)
 		return "AI挂了，我一会发现了就去修；或者你可以试试重发"

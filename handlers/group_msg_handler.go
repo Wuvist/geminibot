@@ -19,6 +19,9 @@ func (g *GroupMessageHandler) handle(msg *openwechat.Message) error {
 	if msg.IsText() {
 		return g.ReplyText(msg)
 	}
+	if err := handleIfPicture(msg); err != nil {
+		return err
+	}
 	return nil
 }
 
