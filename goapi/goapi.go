@@ -2,6 +2,7 @@ package goapi
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -53,33 +54,58 @@ func init() {
 	model = client.GenerativeModel("gemini-pro")
 	model.SetCandidateCount(1)
 	model.SetTemperature(0.1)
+
+	// Not sure why only three Categories are allowed
+	// vModel.SafetySettings = []*genai.SafetySetting{
+	// 	{
+	// 		Category:  genai.HarmCategoryUnspecified,
+	// 		Threshold: genai.HarmBlockNone,
+	// 	},
+	// 	{
+	// 		Category:  genai.HarmCategoryDerogatory,
+	// 		Threshold: genai.HarmBlockNone,
+	// 	},
+	// 	{
+	// 		Category:  genai.HarmCategoryToxicity,
+	// 		Threshold: genai.HarmBlockNone,
+	// 	},
+	// 	{
+	// 		Category:  genai.HarmCategoryViolence,
+	// 		Threshold: genai.HarmBlockNone,
+	// 	},
+	// 	{
+	// 		Category:  genai.HarmCategorySexual,
+	// 		Threshold: genai.HarmBlockNone,
+	// 	},
+	// 	{
+	// 		Category:  genai.HarmCategoryMedical,
+	// 		Threshold: genai.HarmBlockNone,
+	// 	},
+	// 	{
+	// 		Category:  genai.HarmCategoryDangerous,
+	// 		Threshold: genai.HarmBlockNone,
+	// 	},
+	// 	{
+	// 		Category:  genai.HarmCategoryHarassment,
+	// 		Threshold: genai.HarmBlockNone,
+	// 	},
+	// 	{
+	// 		Category:  genai.HarmCategoryHateSpeech,
+	// 		Threshold: genai.HarmBlockNone,
+	// 	},
+	// 	{
+	// 		Category:  genai.HarmCategorySexuallyExplicit,
+	// 		Threshold: genai.HarmBlockNone,
+	// 	},
+	// 	{
+	// 		Category:  genai.HarmCategoryDangerousContent,
+	// 		Threshold: genai.HarmBlockNone,
+	// 	},
+	// }
+
 	model.SafetySettings = []*genai.SafetySetting{
 		{
-			Category:  genai.HarmCategoryUnspecified,
-			Threshold: genai.HarmBlockNone,
-		},
-		{
-			Category:  genai.HarmCategoryDerogatory,
-			Threshold: genai.HarmBlockNone,
-		},
-		{
-			Category:  genai.HarmCategoryToxicity,
-			Threshold: genai.HarmBlockNone,
-		},
-		{
-			Category:  genai.HarmCategoryViolence,
-			Threshold: genai.HarmBlockNone,
-		},
-		{
-			Category:  genai.HarmCategorySexual,
-			Threshold: genai.HarmBlockNone,
-		},
-		{
-			Category:  genai.HarmCategoryMedical,
-			Threshold: genai.HarmBlockNone,
-		},
-		{
-			Category:  genai.HarmCategoryDangerous,
+			Category:  genai.HarmCategoryDangerousContent,
 			Threshold: genai.HarmBlockNone,
 		},
 		{
@@ -88,14 +114,6 @@ func init() {
 		},
 		{
 			Category:  genai.HarmCategoryHateSpeech,
-			Threshold: genai.HarmBlockNone,
-		},
-		{
-			Category:  genai.HarmCategorySexuallyExplicit,
-			Threshold: genai.HarmBlockNone,
-		},
-		{
-			Category:  genai.HarmCategoryDangerousContent,
 			Threshold: genai.HarmBlockNone,
 		},
 	}
@@ -103,31 +121,7 @@ func init() {
 	vModel = client.GenerativeModel("gemini-pro-vision")
 	vModel.SafetySettings = []*genai.SafetySetting{
 		{
-			Category:  genai.HarmCategoryUnspecified,
-			Threshold: genai.HarmBlockNone,
-		},
-		{
-			Category:  genai.HarmCategoryDerogatory,
-			Threshold: genai.HarmBlockNone,
-		},
-		{
-			Category:  genai.HarmCategoryToxicity,
-			Threshold: genai.HarmBlockNone,
-		},
-		{
-			Category:  genai.HarmCategoryViolence,
-			Threshold: genai.HarmBlockNone,
-		},
-		{
-			Category:  genai.HarmCategorySexual,
-			Threshold: genai.HarmBlockNone,
-		},
-		{
-			Category:  genai.HarmCategoryMedical,
-			Threshold: genai.HarmBlockNone,
-		},
-		{
-			Category:  genai.HarmCategoryDangerous,
+			Category:  genai.HarmCategoryDangerousContent,
 			Threshold: genai.HarmBlockNone,
 		},
 		{
@@ -136,14 +130,6 @@ func init() {
 		},
 		{
 			Category:  genai.HarmCategoryHateSpeech,
-			Threshold: genai.HarmBlockNone,
-		},
-		{
-			Category:  genai.HarmCategorySexuallyExplicit,
-			Threshold: genai.HarmBlockNone,
-		},
-		{
-			Category:  genai.HarmCategoryDangerousContent,
 			Threshold: genai.HarmBlockNone,
 		},
 	}
@@ -175,7 +161,6 @@ func GetReply(sender, msg string) (reply string) {
 	var resp *genai.GenerateContentResponse
 
 	if needVmodel {
-		ses = &session{vModel.StartChat(), time.Now()}
 		// sessions[sender] = ses
 		// Somehow gemini-pro-vision close chat after first msg
 		// So, remove from sessions to ensure new session next time
@@ -184,9 +169,9 @@ func GetReply(sender, msg string) (reply string) {
 		mime := http.DetectContentType(picData)
 		log.Printf("mime: %s \n", mime)
 		if strings.Contains(mime, "png") {
-			resp, err = ses.cs.SendMessage(ctx, genai.Text(msg), genai.ImageData("png", picData))
+			resp, err = vModel.GenerateContent(ctx, genai.Text(msg), genai.ImageData("png", picData))
 		} else {
-			resp, err = ses.cs.SendMessage(ctx, genai.Text(msg), genai.ImageData("jpeg", picData))
+			resp, err = vModel.GenerateContent(ctx, genai.Text(msg), genai.ImageData("jpeg", picData))
 		}
 
 		picData = nil
@@ -203,6 +188,8 @@ func GetReply(sender, msg string) (reply string) {
 
 	if err != nil {
 		log.Printf("reply error: %v \n", err)
+		u, _ := json.Marshal(resp)
+		log.Printf("resp json: %s \n", string(u))
 		delete(sessions, sender)
 		return "AI挂了，我一会发现了就去修；或者你可以试试重发"
 	}
