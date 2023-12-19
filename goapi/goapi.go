@@ -22,7 +22,7 @@ type session struct {
 }
 
 func (s *session) HasExpired() bool {
-	return time.Now().Sub(s.lastChat).Minutes() > 5
+	return time.Since(s.lastChat).Minutes() > 5
 }
 
 func (s *session) Update() {
