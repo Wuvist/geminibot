@@ -53,7 +53,7 @@ func init() {
 	// For text-only input, use the gemini-pro model
 	model = client.GenerativeModel("gemini-pro")
 	model.SetCandidateCount(1)
-	model.SetTemperature(0.1)
+	model.SetTemperature(0.9)
 
 	// Not sure why only three Categories are allowed
 	// vModel.SafetySettings = []*genai.SafetySetting{
